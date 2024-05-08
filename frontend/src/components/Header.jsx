@@ -1,5 +1,4 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { Navbar, Nav, Container, Badge, NavDropdown } from 'react-bootstrap';
 import { FaShoppingCart, FaUser } from 'react-icons/fa';
 import { LinkContainer } from 'react-router-bootstrap';
@@ -8,19 +7,35 @@ import { useLogoutMutation } from '../slices/usersApiSlice';
 import { logout } from '../slices/authSlice';
 import { toast } from 'react-toastify';
 import SearchBox from './SearchBox';
+import { useNavigate } from 'react-router-dom';
 
 const Header = () => {
   const { cartItems } = useSelector(state => state.cart);
   const { userInfo } = useSelector(state => state.auth);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [logoutApiCall] = useLogoutMutation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/v1/products');
+        const data = await response.json();
+        setCategories(data.categories);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const logoutHandler = async () => {
     try {
       await logoutApiCall().unwrap();
       dispatch(logout());
-
       navigate('/login');
       toast.success('Logout successful');
     } catch (error) {
@@ -28,14 +43,13 @@ const Header = () => {
     }
   };
 
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
+    navigate('/catagorywiseproduct', { state: { category } });
+  };
+
   return (
-    <Navbar
-      bg='dark'
-      variant='dark'
-      expand='md'
-      collapseOnSelect
-      className='fixed-top z-2 '
-    >
+    <Navbar bg='dark' variant='dark' expand='md' collapseOnSelect className='fixed-top z-2'>
       <Container>
         <LinkContainer to='/'>
           <Navbar.Brand>TechHive</Navbar.Brand>
@@ -44,20 +58,24 @@ const Header = () => {
         <Navbar.Collapse id='basic-navbar-nav'>
           <Nav className='ms-auto m-2'>
             <SearchBox />
+            <NavDropdown title={selectedCategory || 'Categories'} id='categories-dropdown'>
+              {categories.map(category => (
+                <NavDropdown.Item 
+                  key={category} 
+                  onClick={() => handleCategorySelect(category)}
+                  active={category === selectedCategory}
+                >
+                  {category}
+                </NavDropdown.Item>
+              ))}
+            </NavDropdown>
             <LinkContainer to='/cart'>
               <Nav.Link>
                 <FaShoppingCart style={{ marginRight: '5px' }} />
-                Cart
+                Cart{' '}
                 {cartItems.length > 0 && (
-                  <Badge
-                    pill
-                    bg='warning'
-                    style={{ marginLeft: '5px' }}
-                    className='text-dark'
-                  >
-                    <strong>
-                      {cartItems.reduce((acc, item) => acc + item.qty, 0)}
-                    </strong>
+                  <Badge pill bg='warning' style={{ marginLeft: '5px' }} className='text-dark'>
+                    <strong>{cartItems.reduce((acc, item) => acc + item.qty, 0)}</strong>
                   </Badge>
                 )}
               </Nav.Link>
@@ -67,9 +85,7 @@ const Header = () => {
                 <LinkContainer to='/profile'>
                   <NavDropdown.Item>Profile</NavDropdown.Item>
                 </LinkContainer>
-                <NavDropdown.Item onClick={logoutHandler}>
-                  Logout
-                </NavDropdown.Item>
+                <NavDropdown.Item onClick={logoutHandler}>Logout</NavDropdown.Item>
               </NavDropdown>
             ) : (
               <LinkContainer to='/login'>
@@ -80,18 +96,18 @@ const Header = () => {
               </LinkContainer>
             )}
             {userInfo && userInfo.isAdmin && (
-                <NavDropdown title='Admin' id='adminmenu'>
-                  <LinkContainer to='/admin/product-list'>
-                    <NavDropdown.Item>Products</NavDropdown.Item>
-                  </LinkContainer>
-                  <LinkContainer to='/admin/order-list'>
-                    <NavDropdown.Item>Orders</NavDropdown.Item>
-                  </LinkContainer>
-                  <LinkContainer to='/admin/user-list'>
-                    <NavDropdown.Item>Users</NavDropdown.Item>
-                  </LinkContainer>
-                </NavDropdown>
-              )}
+              <NavDropdown title='Admin' id='adminmenu'>
+                <LinkContainer to='/admin/product-list'>
+                  <NavDropdown.Item>Products</NavDropdown.Item>
+                </LinkContainer>
+                <LinkContainer to='/admin/order-list'>
+                  <NavDropdown.Item>Orders</NavDropdown.Item>
+                </LinkContainer>
+                <LinkContainer to='/admin/user-list'>
+                  <NavDropdown.Item>Users</NavDropdown.Item>
+                </LinkContainer>
+              </NavDropdown>
+            )}
           </Nav>
         </Navbar.Collapse>
       </Container>

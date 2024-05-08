@@ -1,9 +1,8 @@
 import Product from '../models/productModel.js';
 import { deleteFile } from '../utils/file.js';
-
 // @desc     Fetch All Products
 // @method   GET
-// @endpoint /api/v1/products?limit=2&skip=0
+// @endpoint /api/v1/products?limit=2&skip=0&category=:category
 // @access   Public
 const getProducts = async (req, res, next) => {
   try {
@@ -13,12 +12,25 @@ const getProducts = async (req, res, next) => {
     const limit = Number(req.query.limit) || maxLimit;
     const skip = Number(req.query.skip) || 0;
     const search = req.query.search || '';
+    const category = req.query.category || ''; // Extract category from query parameter
 
-    const products = await Product.find({
+    // Fetch distinct categories
+    const categories = await Product.distinct('category', {
       name: { $regex: search, $options: 'i' }
-    })
+    });
+
+    // Construct query object based on category filter
+    const query = {
+      name: { $regex: search, $options: 'i' }
+    };
+    if (category) {
+      query.category = category;
+    }
+
+    // Fetch products based on query
+    const products = await Product.find(query)
       .limit(limit > maxLimit ? maxLimit : limit)
-      .skip(skip > maxSkip ? maxSkip : skip < 0 ? 0 : skip);
+      .skip(skip > maxSkip ? maxSkip : skip);
 
     if (!products || products.length === 0) {
       res.statusCode = 404;
@@ -27,6 +39,7 @@ const getProducts = async (req, res, next) => {
 
     res.status(200).json({
       products,
+      categories, // Return distinct categories
       total,
       maxLimit,
       maxSkip
@@ -35,7 +48,6 @@ const getProducts = async (req, res, next) => {
     next(error);
   }
 };
-
 // @desc     Fetch top products
 // @method   GET
 // @endpoint /api/v1/products/top

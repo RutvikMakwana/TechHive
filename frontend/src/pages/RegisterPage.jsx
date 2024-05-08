@@ -9,6 +9,8 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import FormContainer from '../components/FormContainer';
 import Loader from '../components/Loader';
 import Meta from '../components/Meta';
+import validator from 'validator';
+
 
 const RegisterPage = () => {
   const [name, setName] = useState('');
@@ -17,6 +19,10 @@ const RegisterPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setConfirmShowPassword] = useState(false);
+  const [nameError, setNameError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -42,20 +48,57 @@ const RegisterPage = () => {
     setConfirmShowPassword(!showConfirmPassword);
   };
 
+  const validateName = () => {
+    if (name.trim() === '') {
+      setNameError('Name is required');
+    } else {
+      setNameError('');
+    }
+  };
+
+  const validateEmail = () => {
+    if (!validator.isEmail(email)) {
+      setEmailError('Invalid email address');
+    } else {
+      setEmailError('');
+    }
+  };
+
+  const validatePassword = () => {
+    if (password.length < 6) {
+      setPasswordError('Password must be at least 6 characters long');
+    } else {
+      setPasswordError('');
+    }
+  };
+
+  const validateConfirmPassword = () => {
+    if (confirmPassword !== password) {
+      setConfirmPasswordError('Passwords do not match');
+    } else {
+      setConfirmPasswordError('');
+    }
+  };
+
   const submitHandler = async e => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      toast.error('Passwords do not match!');
+    validateName();
+    validateEmail();
+    validatePassword();
+    validateConfirmPassword();
+
+    if (name.trim() === '' || email === '' || password === '' || confirmPassword === '' || nameError || emailError || passwordError || confirmPasswordError) {
+      toast.error('Please fix the validation errors');
       return;
-    } else {
-      try {
-        const res = await register({ name, email, password }).unwrap();
-        dispatch(setCredentials({ ...res }));
-        navigate(redirect);
-        toast.success('Registration successful. Welcome!');
-      } catch (error) {
-        toast.error(error?.data?.message || error.error);
-      }
+    }
+
+    try {
+      const res = await register({ name, email, password }).unwrap();
+      dispatch(setCredentials({ ...res }));
+      navigate(redirect);
+      toast.success('Registration successful. Welcome!');
+    } catch (error) {
+      toast.error(error?.data?.message || error.error);
     }
   };
 
@@ -71,7 +114,9 @@ const RegisterPage = () => {
             type='text'
             placeholder='Enter name'
             onChange={e => setName(e.target.value)}
+            onBlur={validateName}
           />
+          {nameError && <p className="text-danger">{nameError}</p>}
         </Form.Group>
         <Form.Group className='mb-3' controlId='email'>
           <Form.Label>Email address</Form.Label>
@@ -80,7 +125,9 @@ const RegisterPage = () => {
             type='email'
             placeholder='Enter email'
             onChange={e => setEmail(e.target.value)}
+            onBlur={validateEmail}
           />
+          {emailError && <p className="text-danger">{emailError}</p>}
         </Form.Group>
         <Form.Group className='mb-3' controlId='password'>
           <Form.Label>Password</Form.Label>
@@ -90,6 +137,7 @@ const RegisterPage = () => {
               value={password}
               placeholder='Enter password'
               onChange={e => setPassword(e.target.value)}
+              onBlur={validatePassword}
             />
             <InputGroup.Text
               onClick={togglePasswordVisibility}
@@ -99,6 +147,7 @@ const RegisterPage = () => {
               {showPassword ? <FaEye /> : <FaEyeSlash />}
             </InputGroup.Text>
           </InputGroup>
+          {passwordError && <p className="text-danger">{passwordError}</p>}
         </Form.Group>
         <Form.Group className='mb-3' controlId='confirmPassword'>
           <Form.Label>Confirm Password</Form.Label>
@@ -108,6 +157,7 @@ const RegisterPage = () => {
               value={confirmPassword}
               placeholder='Confirm password'
               onChange={e => setConfirmPassword(e.target.value)}
+              onBlur={validateConfirmPassword}
             />
             <InputGroup.Text
               onClick={toggleConfirmPasswordVisibility}
@@ -117,6 +167,7 @@ const RegisterPage = () => {
               {showConfirmPassword ? <FaEye /> : <FaEyeSlash />}
             </InputGroup.Text>
           </InputGroup>
+          {confirmPasswordError && <p className="text-danger">{confirmPasswordError}</p>}
         </Form.Group>
         <Button
           className='mb-3 w-100'

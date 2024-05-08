@@ -9,12 +9,15 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import FormContainer from '../components/FormContainer';
 import Loader from '../components/Loader';
 import Meta from '../components/Meta';
+import validator from 'validator';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -37,8 +40,34 @@ const LoginPage = () => {
     setShowPassword(!showPassword);
   };
 
+  const validateEmail = () => {
+    if (!validator.isEmail(email)) {
+      setEmailError('Invalid email address');
+    } else {
+      setEmailError('');
+    }
+  };
+
+  
+
+  const validatePassword = () => {
+    if (password.trim() === '') {
+      setPasswordError('Password is required');
+    } else {
+      setPasswordError('');
+    }
+  };
+
   const submitHandler = async e => {
     e.preventDefault();
+    validateEmail();
+    validatePassword();
+
+    if (email.trim() === '' || password.trim() === '') {
+      toast.error('Please enter your email and password');
+      return;
+    }
+
     try {
       const res = await login({ email, password, remember }).unwrap();
       dispatch(setCredentials({ ...res }));
@@ -48,6 +77,7 @@ const LoginPage = () => {
       toast.error(error?.data?.message || error.error);
     }
   };
+
   return (
     <FormContainer>
       <Meta title={'Sign In'} />
@@ -60,7 +90,9 @@ const LoginPage = () => {
             value={email}
             placeholder='Enter email'
             onChange={e => setEmail(e.target.value)}
+            onBlur={validateEmail}
           />
+          {emailError && <p className="text-danger">{emailError}</p>}
         </Form.Group>
         <Form.Group className='mb-3' controlId='password'>
           <Form.Label>Password</Form.Label>
@@ -70,6 +102,7 @@ const LoginPage = () => {
               value={password}
               placeholder='Enter password'
               onChange={e => setPassword(e.target.value)}
+              onBlur={validatePassword}
             />
             <InputGroup.Text
               onClick={togglePasswordVisibility}
@@ -79,6 +112,7 @@ const LoginPage = () => {
               {showPassword ? <FaEye /> : <FaEyeSlash />}
             </InputGroup.Text>
           </InputGroup>
+          {passwordError && <p className="text-danger">{passwordError}</p>}
         </Form.Group>
         <Row>
           <Col>

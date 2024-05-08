@@ -26,6 +26,12 @@ const ProductFormPage = () => {
   const [price, setPrice] = useState(0);
   const [countInStock, setCountInStock] = useState(0);
 
+  const [nameError, setNameError] = useState('');
+  const [priceError, setPriceError] = useState('');
+  const [brandError, setBrandError] = useState('');
+  const [categoryError, setCategoryError] = useState('');
+  const [countInStockError, setCountInStockError] = useState('');
+
   const getProductQueryResult = useGetProductDetailsQuery(productId);
 
   const {
@@ -69,8 +75,54 @@ const ProductFormPage = () => {
     }
   };
 
+  const validateFields = () => {
+    let isValid = true;
+
+    if (!name.trim()) {
+      setNameError('Name is required');
+      isValid = false;
+    } else {
+      setNameError('');
+    }
+
+    if (price <= 0) {
+      setPriceError('Price must be greater than 0');
+      isValid = false;
+    } else {
+      setPriceError('');
+    }
+
+    if (!brand.trim()) {
+      setBrandError('Brand is required');
+      isValid = false;
+    } else {
+      setBrandError('');
+    }
+
+    if (!category.trim()) {
+      setCategoryError('Category is required');
+      isValid = false;
+    } else {
+      setCategoryError('');
+    }
+
+    if (countInStock < 0) {
+      setCountInStockError('Count In Stock must be greater than or equal to 0');
+      isValid = false;
+    } else {
+      setCountInStockError('');
+    }
+
+    return isValid;
+  };
+
   const submitHandler = async e => {
     e.preventDefault();
+
+    if (!validateFields()) {
+      return;
+    }
+
     try {
       const productData = {
         name,
@@ -100,7 +152,7 @@ const ProductFormPage = () => {
 
   return (
     <>
-    <Meta title={'Product Form'} />
+      <Meta title={'Product Form'} />
       <Link to='/admin/product-list' className='btn btn-light my-3'>
         Go Back
       </Link>
@@ -125,7 +177,8 @@ const ProductFormPage = () => {
                 placeholder='Enter name'
                 value={name}
                 onChange={e => setName(e.target.value)}
-              ></Form.Control>
+              />
+              {nameError && <p className="text-danger">{nameError}</p>}
             </Form.Group>
 
             <Form.Group controlId='price'>
@@ -135,7 +188,8 @@ const ProductFormPage = () => {
                 placeholder='Enter price'
                 value={price}
                 onChange={e => setPrice(e.target.value)}
-              ></Form.Control>
+              />
+              {priceError && <p className="text-danger">{priceError}</p>}
             </Form.Group>
 
             <Form.Group controlId='image'>
@@ -143,7 +197,7 @@ const ProductFormPage = () => {
               <Form.Control
                 type='file'
                 onChange={uploadFileHandler}
-              ></Form.Control>
+              />
             </Form.Group>
 
             <Form.Group controlId='brand'>
@@ -153,7 +207,8 @@ const ProductFormPage = () => {
                 placeholder='Enter brand'
                 value={brand}
                 onChange={e => setBrand(e.target.value)}
-              ></Form.Control>
+              />
+              {brandError && <p className="text-danger">{brandError}</p>}
             </Form.Group>
 
             <Form.Group controlId='countInStock'>
@@ -163,7 +218,8 @@ const ProductFormPage = () => {
                 placeholder='Enter countInStock'
                 value={countInStock}
                 onChange={e => setCountInStock(e.target.value)}
-              ></Form.Control>
+              />
+              {countInStockError && <p className="text-danger">{countInStockError}</p>}
             </Form.Group>
 
             <Form.Group controlId='category'>
@@ -173,7 +229,8 @@ const ProductFormPage = () => {
                 placeholder='Enter category'
                 value={category}
                 onChange={e => setCategory(e.target.value)}
-              ></Form.Control>
+              />
+              {categoryError && <p className="text-danger">{categoryError}</p>}
             </Form.Group>
 
             <Form.Group controlId='description'>
@@ -185,7 +242,7 @@ const ProductFormPage = () => {
                 placeholder='Enter description'
                 value={description}
                 onChange={e => setDescription(e.target.value)}
-              ></Form.Control>
+              />
             </Form.Group>
 
             <Button

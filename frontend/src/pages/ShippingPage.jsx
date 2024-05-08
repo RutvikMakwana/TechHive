@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Form, Button } from 'react-bootstrap';
+import { Form, Button, Alert } from 'react-bootstrap';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { saveShippingAddress } from '../slices/cartSlice';
@@ -12,31 +12,36 @@ const ShippingPage = () => {
 
   const [address, setAddress] = useState(shippingAddress.address || '');
   const [city, setCity] = useState(shippingAddress.city || '');
-  const [postalCode, setPostalCode] = useState(
-    shippingAddress.postalCode || ''
-  );
+  const [postalCode, setPostalCode] = useState(shippingAddress.postalCode || '');
   const [country, setCountry] = useState(shippingAddress.country || '');
+  const [error, setError] = useState('');
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const submitHandler = e => {
     e.preventDefault();
-    dispatch(
-      saveShippingAddress({
-        address,
-        city,
-        postalCode,
-        country
-      })
-    );
-    navigate('/payment');
+    if (!address || !city || !postalCode || !country) {
+      setError('Please fill in all fields.');
+    } else {
+      dispatch(
+        saveShippingAddress({
+          address,
+          city,
+          postalCode,
+          country
+        })
+      );
+      navigate('/payment');
+    }
   };
+
   return (
     <FormContainer>
       <CheckoutSteps step1 step2 />
       <Meta title={'Shipping'} />
       <h1>Shipping</h1>
+      {error && <Alert variant="danger">{error}</Alert>}
       <Form onSubmit={submitHandler}>
         <Form.Group className='mb-3' controlId='address'>
           <Form.Label>Address</Form.Label>
@@ -61,7 +66,7 @@ const ShippingPage = () => {
           <Form.Control
             value={postalCode}
             type='text'
-            placeholder='Enter city'
+            placeholder='Enter postal code'
             onChange={e => setPostalCode(e.target.value)}
           />
         </Form.Group>
@@ -70,7 +75,7 @@ const ShippingPage = () => {
           <Form.Control
             value={country}
             type='text'
-            placeholder='Enter city'
+            placeholder='Enter country'
             onChange={e => setCountry(e.target.value)}
           />
         </Form.Group>

@@ -10,12 +10,15 @@ import FormContainer from '../../components/FormContainer';
 import Meta from '../../components/Meta';
 import Footer from '../../components/Footer';
 import Loader from '../../components/Loader';
+import validator from 'validator'; // Import validator library
 
 const AdminLoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
+  const [emailError, setEmailError] = useState(''); // Add state for email error
+  const [passwordError, setPasswordError] = useState(''); // Add state for password error
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -33,8 +36,32 @@ const AdminLoginPage = () => {
     }
   }, [userInfo, redirect, navigate]);
 
+  const validateEmail = () => {
+    if (!validator.isEmail(email)) {
+      setEmailError('Invalid email address');
+    } else {
+      setEmailError('');
+    }
+  };
+
+  const validatePassword = () => {
+    if (password.length < 6) {
+      setPasswordError('Password must be at least 6 characters long');
+    } else {
+      setPasswordError('');
+    }
+  };
+
   const submitHandler = async e => {
     e.preventDefault();
+    validateEmail(); // Call validateEmail function
+    validatePassword(); // Call validatePassword function
+
+    if (!validator.isEmail(email) || password.length < 6) { // Check email and password validity
+      toast.error('Please fix the validation errors');
+      return;
+    }
+
     try {
       const res = await login({ email, password, remember }).unwrap();
       dispatch(setCredentials({ ...res }));
@@ -64,7 +91,9 @@ const AdminLoginPage = () => {
                   value={email}
                   placeholder='Enter email'
                   onChange={e => setEmail(e.target.value)}
+                  onBlur={validateEmail} // Call validateEmail function on blur
                 />
+                {emailError && <p className="text-danger">{emailError}</p>} {/* Display email error */}
               </Form.Group>
               <Form.Group className='mb-3' controlId='password'>
                 <Form.Label>Password</Form.Label>
@@ -74,6 +103,7 @@ const AdminLoginPage = () => {
                     value={password}
                     placeholder='Enter password'
                     onChange={e => setPassword(e.target.value)}
+                    onBlur={validatePassword} // Call validatePassword function on blur
                   />
                   <InputGroup.Text
                     onClick={togglePasswordVisibility}
@@ -83,6 +113,7 @@ const AdminLoginPage = () => {
                     {showPassword ? <FaEye /> : <FaEyeSlash />}
                   </InputGroup.Text>
                 </InputGroup>
+                {passwordError && <p className="text-danger">{passwordError}</p>} {/* Display password error */}
               </Form.Group>
               <Form.Group className='mb-3' controlId='checkbox'>
                 <Form.Check
